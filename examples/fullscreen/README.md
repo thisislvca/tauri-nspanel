@@ -10,7 +10,7 @@ pnpm tauri dev
 # What you should know
 
 ## Remove Window Decorations
-Configure the window, set `decorations` and `fullscreen` to `false`:
+Configure the window by setting `decorations` and `fullscreen` to false:
 
 [tauri-config.json](https://github.com/ahkohd/tauri-nspanel/blob/754f9b0fdf39511a839280b6b9a418ff51630acc/examples/fullscreen/src-tauri/tauri.conf.json#L52)
 
@@ -19,13 +19,13 @@ Configure the window, set `decorations` and `fullscreen` to `false`:
     "decorations": false,
     "fullscreen": false
 }
-
 ```
 
 ## Set Activation Policy (optional)
-Set the app's activation policy during startup to auxiliary, this prevents the app icon from showing on the dock:
+Set the app's activation policy to auxiliary during startup; this prevents the app icon from appearing in the dock:
 
 [main.rs](https://github.com/ahkohd/tauri-nspanel/blob/be8ba6c71e03cd115536bbb74eccc42df3d52ba6/examples/fullscreen/src-tauri/src/main.rs#L19)
+
 ```rust
     .setup(|app| {
       // Set activation poicy to Accessory to prevent the app icon from showing on the dock
@@ -38,7 +38,7 @@ Set the app's activation policy during startup to auxiliary, this prevents the a
 ```
 
 ## Set Window Level
-Raise the panel to the floating window level:
+Raise the panel the floating window level:
 
 [main.rs](https://github.com/ahkohd/tauri-nspanel/blob/be8ba6c71e03cd115536bbb74eccc42df3d52ba6/examples/fullscreen/src-tauri/src/main.rs#L58)
 
@@ -46,12 +46,13 @@ Raise the panel to the floating window level:
   // Set the window to float level
   #[allow(non_upper_case_globals)]
   const NSFloatWindowLevel: i32 = 4;
+
   panel.set_level(NSFloatWindowLevel);
 ```
 You can configure other levels, such as setting the panel above the main menu window level, as long as it is above the normal window level.
 
 ## Prevent Panel From Activating The Application
-It's important for the panel to activate the application; this is required for the panel to display over other fullscreen windows: 
+It's important to prevent the panel from activating the application, as this is necessary for it to display over other fullscreen windows:
 
 [main.rs](https://github.com/ahkohd/tauri-nspanel/blob/be8ba6c71e03cd115536bbb74eccc42df3d52ba6/examples/fullscreen/src-tauri/src/main.rs#L63)
 
@@ -62,7 +63,7 @@ It's important for the panel to activate the application; this is required for t
   panel.set_style_mask(NSWindowStyleMaskNonActivatingPanel);
 ```
 ## Set Window Collection Behaviour
-To make the panel display over fullscreen window we need to make sure it can join all spaces and be on the same space as a full screen window:
+To display the panel over a fullscreen window, we need to ensure it can join all spaces and be in the same space as the fullscreen window:
 
 [main.rs](https://github.com/ahkohd/tauri-nspanel/blob/be8ba6c71e03cd115536bbb74eccc42df3d52ba6/examples/fullscreen/src-tauri/src/main.rs#L68)
 
@@ -77,7 +78,7 @@ To make the panel display over fullscreen window we need to make sure it can joi
 ```
 
 ### Make the Panel Resizeable
-To make the panel resizeable and the resizable window append the resizeable window style mask:
+To make the panel resizable, append the resizable window style mask to the window:
 
 [main.rs](https://github.com/ahkohd/tauri-nspanel/blob/be8ba6c71e03cd115536bbb74eccc42df3d52ba6/examples/fullscreen/src-tauri/src/main.rs#L63)
 
