@@ -1,5 +1,5 @@
 # Demo
-This demo uses the [tauri-nspanel](https://github.com/ahkohd/tauri-nspanel) crate to convert a standard Tauri [WebviewWindow](https://docs.rs/tauri/2.1.1/tauri/webview/struct.WebviewWindow.html) ([NSWindow](https://developer.apple.com/documentation/appkit/nswindow/)) to [NSPanel](https://developer.apple.com/documentation/appkit/nspanel/) that can display over other fullscreen window.
+This demo uses the [tauri-nspanel](https://github.com/ahkohd/tauri-nspanel) crate to convert a standard Tauri [WebviewWindow](https://docs.rs/tauri/2.1.1/tauri/webview/struct.WebviewWindow.html) ([NSWindow](https://developer.apple.com/documentation/appkit/nswindow/)) to [NSPanel](https://developer.apple.com/documentation/appkit/nspanel/) that can display over fullscreen window.
 
 ```bash
 pnpm install
@@ -7,7 +7,7 @@ pnpm install
 pnpm tauri dev
 ```
 
-# Some notes
+# What you should know
 
 ## Remove Window Decorations
 Configure the window, set `decorations` and `fullscreen` to `false`:
