@@ -98,6 +98,7 @@ The following are projects related to this plugin:
 
 - [tauri-plugin-spotlight](https://github.com/zzzze/tauri-plugin-spotlight)
 - [tauri-macos-spotlight-example](https://github.com/ahkohd/tauri-macos-spotlight-example)
+- [tauri-macos-menubar-example](https://github.com/ahkohd/tauri-macos-menubar-app-example)
 
 # Showcase
 
