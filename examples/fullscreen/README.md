@@ -1,6 +1,7 @@
 # Demo
-This demo uses the [tauri-nspanel](https://github.com/ahkohd/tauri-nspanel) crate to convert a standard Tauri [WebviewWindow](https://docs.rs/tauri/2.1.1/tauri/webview/struct.WebviewWindow.html) ([NSWindow](https://developer.apple.com/documentation/appkit/nswindow/)) to [NSPanel](https://developer.apple.com/documentation/appkit/nspanel/) that can display over fullscreen window.
+[tauri-nspanel](https://github.com/ahkohd/tauri-nspanel) plugin converts a standard Tauri [WebviewWindow](https://docs.rs/tauri/2.1.1/tauri/webview/struct.WebviewWindow.html) ([NSWindow](https://developer.apple.com/documentation/appkit/nswindow/)) to [NSPanel](https://developer.apple.com/documentation/appkit/nspanel/) that can display over fullscreen window.
 
+To run the demo:
 ```bash
 pnpm install
 
@@ -21,7 +22,7 @@ Configure the window by setting `decorations` and `fullscreen` to false:
 }
 ```
 
-## Set Activation Policy (optional)
+## Set Activation Policy (Optional)
 Set the app's activation policy to auxiliary during startup; this prevents the app icon from appearing in the dock:
 
 [main.rs](https://github.com/ahkohd/tauri-nspanel/blob/be8ba6c71e03cd115536bbb74eccc42df3d52ba6/examples/fullscreen/src-tauri/src/main.rs#L19)
@@ -38,7 +39,7 @@ Set the app's activation policy to auxiliary during startup; this prevents the a
 ```
 
 ## Set Window Level
-Raise the panel the floating window level:
+Raise the panel to floating window level:
 
 [main.rs](https://github.com/ahkohd/tauri-nspanel/blob/be8ba6c71e03cd115536bbb74eccc42df3d52ba6/examples/fullscreen/src-tauri/src/main.rs#L58)
 
@@ -49,10 +50,16 @@ Raise the panel the floating window level:
 
   panel.set_level(NSFloatWindowLevel);
 ```
-You can configure other levels, such as setting the panel above the main menu window level, as long as it is above the normal window level.
+You can set to other levels as long as it is above the normal window level, for example, set the panel above the main menu window level:
+```rust
+  use cocoa::appkit::NSMainMenuWindowLevel;
+
+  // this level is recommend for a spotlight panel
+  panel.set_level(NSMainMenuWindowLevel + 1);
+```
 
 ## Prevent Panel From Activating The Application
-It's important to prevent the panel from activating the application, as this is necessary for it to display over other fullscreen windows:
+It's required to prevent the panel from activating the application to display over a fullscreen window:
 
 [main.rs](https://github.com/ahkohd/tauri-nspanel/blob/be8ba6c71e03cd115536bbb74eccc42df3d52ba6/examples/fullscreen/src-tauri/src/main.rs#L63)
 
@@ -77,8 +84,8 @@ To display the panel over a fullscreen window, we need to ensure it can join all
   );
 ```
 
-### Make the Panel Resizeable
-To make the panel resizable, append the resizable window style mask to the window:
+## Make The Panel Resizeable
+To make the panel resizable, append the appropriate window style mask to the panel:
 
 [main.rs](https://github.com/ahkohd/tauri-nspanel/blob/be8ba6c71e03cd115536bbb74eccc42df3d52ba6/examples/fullscreen/src-tauri/src/main.rs#L63)
 
@@ -90,8 +97,8 @@ To make the panel resizable, append the resizable window style mask to the windo
   
   panel.set_style_mask(NSWindowStyleMaskNonActivatingPanel + NSResizableWindowMask);
 ```
-## Add A Drag Region (optional)
-To make the panel dragable, add drag region:
+## Add A Drag Region (Optional)
+To make the panel dragable, setup a drag region:
 
 [index.html](https://github.com/ahkohd/tauri-nspanel/blob/c2d3dd072fdb40d9fdaf5267eeb967e314b1151a/examples/fullscreen/public/index.html#L33)
 
