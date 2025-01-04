@@ -1,5 +1,5 @@
 # Demo
-[tauri-nspanel](https://github.com/ahkohd/tauri-nspanel) plugin converts a standard Tauri [WebviewWindow](https://docs.rs/tauri/2.1.1/tauri/webview/struct.WebviewWindow.html) ([NSWindow](https://developer.apple.com/documentation/appkit/nswindow/)) to [NSPanel](https://developer.apple.com/documentation/appkit/nspanel/) that can display over fullscreen window.
+[tauri-nspanel](https://github.com/ahkohd/tauri-nspanel) converts a standard Tauri [WebviewWindow](https://docs.rs/tauri/2.1.1/tauri/webview/struct.WebviewWindow.html) ([NSWindow](https://developer.apple.com/documentation/appkit/nswindow/)) to [NSPanel](https://developer.apple.com/documentation/appkit/nspanel/) that can display over fullscreen window.
 
 To run the demo:
 ```bash

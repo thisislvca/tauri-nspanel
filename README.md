@@ -97,7 +97,6 @@ panel.close();
 The following are projects related to this plugin:
 
 - [tauri-plugin-spotlight](https://github.com/zzzze/tauri-plugin-spotlight)
-- [tauri-nspanel-example](https://github.com/ahkohd/tauri-nspanel/tree/v2/examples/vanilla)
 - [tauri-macos-spotlight-example](https://github.com/ahkohd/tauri-macos-spotlight-example)
 
 # Showcase
