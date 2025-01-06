@@ -24,7 +24,7 @@ jobs:
           override: true
       - name: Build docs
         run: |
-          cargo doc
+          cargo doc --no-deps
           echo "<meta http-equiv=\"refresh\" content=\"0; url=tauri_nspanel\">" > target/doc/index.html
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
