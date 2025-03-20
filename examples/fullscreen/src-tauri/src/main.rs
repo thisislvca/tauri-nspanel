@@ -32,6 +32,7 @@ fn init(app_handle: &AppHandle) {
   let window: WebviewWindow = app_handle.get_webview_window("main").unwrap();
 
   let panel = window.to_panel().unwrap();
+  panel.activate();
 
   let delegate = panel_delegate!(MyPanelDelegate {
     window_did_become_key,
