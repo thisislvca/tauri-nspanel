@@ -1,7 +1,7 @@
 use bitflags::bitflags;
 use cocoa::{
     appkit::{NSView, NSViewHeightSizable, NSViewWidthSizable, NSWindowCollectionBehavior},
-    base::{id, nil, BOOL, YES, NO},
+    base::{id, nil, BOOL, NO, YES},
     foundation::NSRect,
 };
 
@@ -27,7 +27,7 @@ bitflags! {
 
 extern "C" {
     pub fn object_setClass(obj: id, cls: id) -> id;
-    
+
     // Mouse tracking related selectors
     pub fn NSMouseEntered(event: id);
     pub fn NSMouseExited(event: id);
@@ -57,7 +57,7 @@ impl RawNSPanel {
     // Add this new method to prevent automatic resignation
     extern "C" fn can_resign_key_window(_: &Object, _: Sel) -> BOOL {
         // Return NO to prevent the panel from automatically resigning key window status
-        unsafe { NO }  // Import NO alongside YES at the top of the file
+        NO
     }
 
     extern "C" fn dealloc(this: &mut Object, _cmd: Sel) {
@@ -71,23 +71,18 @@ impl RawNSPanel {
 
     extern "C" fn mouse_entered(_this: &Object, _sel: Sel, _event: id) {
         unsafe {
-            println!("Mouse entered panel");  // Add debugging message
             let this: id = _this as *const _ as id;
-            
+
             // Force the panel to become key and active
             let _: () = msg_send![this, makeKeyWindow];
-            
+
             // Add explicit type annotation for the content view
             let content_view: id = msg_send![this, contentView];
             let _: () = msg_send![this, makeFirstResponder: content_view];
         }
     }
 
-    extern "C" fn mouse_exited(_this: &Object, _sel: Sel, _event: id) {
-        unsafe {
-            println!("Mouse exited panel");  // Add debugging message
-        }
-    }
+    extern "C" fn mouse_exited(_this: &Object, _sel: Sel, _event: id) {}
 
     fn define_class() -> &'static Class {
         let mut cls = ClassDecl::new(CLS_NAME, class!(NSPanel))
@@ -109,13 +104,13 @@ impl RawNSPanel {
                 sel!(dealloc),
                 Self::dealloc as extern "C" fn(&mut Object, Sel),
             );
-            
+
             // Add mouse tracking methods
             cls.add_method(
                 sel!(mouseEntered:),
                 Self::mouse_entered as extern "C" fn(&Object, Sel, id),
             );
-            
+
             cls.add_method(
                 sel!(mouseExited:),
                 Self::mouse_exited as extern "C" fn(&Object, Sel, id),
@@ -216,16 +211,16 @@ impl RawNSPanel {
     pub fn activate(&self) {
         // Configure panel for interaction
         self.set_accepts_mouse_moved_events(true);
-        self.set_becomes_key_only_if_needed(false);
+        self.set_becomes_key_only_if_needed(true);
         self.set_works_when_modal(true);
         self.set_hides_on_deactivate(false);
-        
+
         // Make the window visible and activated with higher window level
         self.set_level(3); // NSFloatingWindowLevel
         self.order_front_regardless();
         self.make_key_and_order_front(None);
         self.make_key_window();
-        
+
         // Set first responder to ensure focus
         self.make_first_responder(Some(self.content_view()));
     }
@@ -286,7 +281,7 @@ impl RawNSPanel {
                 userInfo: nil
             ]
         };
-        
+
         let autoresizing_mask = NSViewWidthSizable | NSViewHeightSizable;
         let () = unsafe { msg_send![view, setAutoresizingMask: autoresizing_mask] };
         let () = unsafe { msg_send![view, addTrackingArea: track_view] };
@@ -302,17 +297,17 @@ impl RawNSPanel {
 
             // Add a tracking area to the panel's content view
             panel.add_tracking_area();
-            
+
             // Configure panel to maintain focus - do this immediately
             panel.set_accepts_mouse_moved_events(true);
-            panel.set_becomes_key_only_if_needed(false);
+            panel.set_becomes_key_only_if_needed(true);
             panel.set_hides_on_deactivate(false);
             panel.set_works_when_modal(true);
-            
+
             // Set to floating window level for better focus retention
             panel.set_level(3); // NSFloatingWindowLevel = 3
             panel.make_key_window(); // Make it the key window initially
-            
+
             panel
         }
     }
