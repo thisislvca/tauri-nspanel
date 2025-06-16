@@ -1,9 +1,12 @@
 use bitflags::bitflags;
 use cocoa::{
-    appkit::{NSView, NSViewHeightSizable, NSViewWidthSizable, NSWindowCollectionBehavior},
+    appkit::{
+        NSView as NSViewOld, NSViewHeightSizable, NSViewWidthSizable, NSWindowCollectionBehavior,
+    },
     base::{id, nil, BOOL, NO, YES},
     foundation::NSRect,
 };
+// use objc2_app_kit::{NSPanel, NSView};
 
 use objc::{
     class,
@@ -17,7 +20,7 @@ use objc_id::{Id, ShareId};
 use tauri::{Runtime, WebviewWindow};
 
 bitflags! {
-    struct NSTrackingAreaOptions: u32 {
+    struct NSTrackingAreaOptionsOld: u32 {
         const NSTrackingActiveAlways = 0x80;
         const NSTrackingMouseEnteredAndExited = 0x01;
         const NSTrackingMouseMoved = 0x02;
@@ -51,13 +54,13 @@ impl INSObject for RawNSPanel {
 impl RawNSPanel {
     /// Returns YES to ensure that RawNSPanel can become a key window
     extern "C" fn can_become_key_window(_: &Object, _: Sel) -> BOOL {
-        YES
+        YES // [UPDATED COMMENT] if "NO", the panel becomes a key window only when you click on it (previous behavior)
     }
 
     // Add this new method to prevent automatic resignation
     extern "C" fn can_resign_key_window(_: &Object, _: Sel) -> BOOL {
         // Return NO to prevent the panel from automatically resigning key window status
-        NO
+        NO // [UPDATED COMMENT] Making it "YES" doesn't change anything functionally if we have the mouse tracking area
     }
 
     extern "C" fn dealloc(this: &mut Object, _cmd: Sel) {
@@ -82,7 +85,10 @@ impl RawNSPanel {
         }
     }
 
-    extern "C" fn mouse_exited(_this: &Object, _sel: Sel, _event: id) {}
+    extern "C" fn mouse_exited(_this: &Object, _sel: Sel, _event: id) {
+        // resign key window - THIS FIXES KEYBOARD FOCUS NOT BEING RETURNED ON MOUSE EXIT
+        let _: () = unsafe { msg_send![_this, resignKeyWindow] };
+    }
 
     fn define_class() -> &'static Class {
         let mut cls = ClassDecl::new(CLS_NAME, class!(NSPanel))
@@ -123,7 +129,9 @@ impl RawNSPanel {
     pub fn show(&self) {
         self.make_first_responder(Some(self.content_view()));
         self.order_front_regardless();
-        self.make_key_window();
+        self.make_key_window(); // technically not needed, not sure why it's here. This would make the panel key when showing it
+                                // meaning the keyboard focus would move to this panel even though the mouse hasn't entered it yet (aka the user hasn't acknowledged the panel yet)
+                                // comment this out if creating window at runtime instead of during app launch (I'm currently creating the win as hidden and showing it only when needed)
     }
 
     pub fn is_visible(&self) -> bool {
@@ -216,10 +224,12 @@ impl RawNSPanel {
         self.set_hides_on_deactivate(false);
 
         // Make the window visible and activated with higher window level
-        self.set_level(3); // NSFloatingWindowLevel
+        self.set_level(3); // NSFloatingWindowLevel - alternative to set_floating_panel(true)... not sure which to use, nothing changes rn
+                           // also this does the same as order_front_regardless, so one of the two could be removed
         self.order_front_regardless();
         self.make_key_and_order_front(None);
-        self.make_key_window();
+        // self.set_floating_panel(true); // maybe this is needed instead? not sure
+        self.make_key_window(); // same as the above make_key_window() comment
 
         // Set first responder to ensure focus
         self.make_first_responder(Some(self.content_view()));
@@ -267,16 +277,16 @@ impl RawNSPanel {
 
     fn add_tracking_area(&self) {
         let view: id = self.content_view();
-        let bounds: NSRect = unsafe { NSView::bounds(view) };
+        let bounds: NSRect = unsafe { NSViewOld::bounds(view) };
         let track_view: id = unsafe { msg_send![class!(NSTrackingArea), alloc] };
         let track_view: id = unsafe {
             msg_send![
                 track_view,
                 initWithRect: bounds
-                options: NSTrackingAreaOptions::NSTrackingActiveAlways.bits()
-                | NSTrackingAreaOptions::NSTrackingMouseEnteredAndExited.bits()
-                | NSTrackingAreaOptions::NSTrackingMouseMoved.bits()
-                | NSTrackingAreaOptions::NSTrackingCursorUpdate.bits()
+                options: NSTrackingAreaOptionsOld::NSTrackingActiveAlways.bits()
+                | NSTrackingAreaOptionsOld::NSTrackingMouseEnteredAndExited.bits()
+                | NSTrackingAreaOptionsOld::NSTrackingMouseMoved.bits()
+                | NSTrackingAreaOptionsOld::NSTrackingCursorUpdate.bits()
                 owner: self
                 userInfo: nil
             ]
@@ -300,13 +310,14 @@ impl RawNSPanel {
 
             // Configure panel to maintain focus - do this immediately
             panel.set_accepts_mouse_moved_events(true);
-            panel.set_becomes_key_only_if_needed(true);
+            panel.set_becomes_key_only_if_needed(false);
             panel.set_hides_on_deactivate(false);
             panel.set_works_when_modal(true);
 
             // Set to floating window level for better focus retention
             panel.set_level(3); // NSFloatingWindowLevel = 3
-            panel.make_key_window(); // Make it the key window initially
+
+            // panel.make_key_window(); // Make it the key window initially - not needed rn, see comments above
 
             panel
         }

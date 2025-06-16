@@ -15,10 +15,13 @@ bitflags = "2.6.0"
 block = "0.1.6"
 core-graphics = { version = "0.24.0" }
 core-foundation = { version = "0.10.0" }
-cocoa = { version = "0.26.0" }
-objc = { version = "0.2.7" }
-objc_id = { version = "0.1.1" }
-objc-foundation = { version = "0.1.1" }
+cocoa = { version = "0.26.0" }           # need to remove
+objc = { version = "0.2.7" }             # need to remove
+objc_id = { version = "0.1.1" }          # need to remove
+objc-foundation = { version = "0.1.1" }  # need to remove
+# objc2 = "0.6.1"
+# objc2-app-kit = "0.3.1"
+# objc2-foundation = "0.3.1"
 
 [features]
 cargo-clippy = []
