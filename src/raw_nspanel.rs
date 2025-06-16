@@ -19,6 +19,8 @@ use objc_foundation::INSObject;
 use objc_id::{Id, ShareId};
 use tauri::{Runtime, WebviewWindow};
 
+use super::WebviewPanelConfig;
+
 bitflags! {
     struct NSTrackingAreaOptionsOld: u32 {
         const NSTrackingActiveAlways = 0x80;
@@ -292,15 +294,20 @@ impl RawNSPanel {
     }
 
     /// Create an NSPanel from a Tauri Webview Window
-    pub fn from_window<R: Runtime>(window: WebviewWindow<R>) -> Id<Self> {
+    pub fn from_window<R: Runtime>(
+        window: WebviewWindow<R>,
+        config: WebviewPanelConfig,
+    ) -> Id<Self> {
         let nswindow: id = window.ns_window().unwrap() as _;
         let nspanel_class: id = unsafe { msg_send![Self::class(), class] };
         unsafe {
             object_setClass(nswindow, nspanel_class);
             let panel = Id::from_retained_ptr(nswindow as *mut RawNSPanel);
 
-            // Add a tracking area to the panel's content view
-            panel.add_tracking_area();
+            if config.with_tracking_area {
+                // Add a tracking area to the panel's content view
+                panel.add_tracking_area();
+            }
 
             // Configure panel to maintain focus - do this immediately
             panel.set_accepts_mouse_moved_events(true);

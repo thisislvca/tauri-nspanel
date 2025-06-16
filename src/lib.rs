@@ -54,18 +54,38 @@ impl<R: Runtime, T: Manager<R>> ManagerExt<R> for T {
     }
 }
 
-#[derive(Default)]
 pub struct WebviewPanelConfig {
     pub delegate: Option<id>,
+    pub with_tracking_area: bool,
+}
+
+impl Default for WebviewPanelConfig {
+    fn default() -> Self {
+        Self {
+            delegate: None,
+            with_tracking_area: true,
+        }
+    }
 }
 
 pub trait WebviewWindowExt<R: Runtime> {
     fn to_panel(&self) -> tauri::Result<ShareId<RawNSPanel>>;
+    fn to_panel_with_config(
+        &self,
+        config: WebviewPanelConfig,
+    ) -> tauri::Result<ShareId<RawNSPanel>>;
 }
 
 impl<R: Runtime> WebviewWindowExt<R> for WebviewWindow<R> {
     fn to_panel(&self) -> tauri::Result<ShareId<RawNSPanel>> {
-        let panel = RawNSPanel::from_window(self.to_owned());
+        self.to_panel_with_config(WebviewPanelConfig::default())
+    }
+
+    fn to_panel_with_config(
+        &self,
+        config: WebviewPanelConfig,
+    ) -> tauri::Result<ShareId<RawNSPanel>> {
+        let panel = RawNSPanel::from_window(self.to_owned(), config);
         let shared_panel = panel.share();
         let manager = self.state::<self::WebviewPanelManager>();
 
