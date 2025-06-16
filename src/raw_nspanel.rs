@@ -100,15 +100,15 @@ impl RawNSPanel {
                 Self::can_become_key_window as extern "C" fn(&Object, Sel) -> BOOL,
             );
 
-            // Add this new method to prevent the panel from resigning key window status
-            cls.add_method(
-                sel!(canResignKeyWindow),
-                Self::can_resign_key_window as extern "C" fn(&Object, Sel) -> BOOL,
-            );
+            // Add this new method to prevent the panel from resigning key window status - NOTE THIS DOESN'T EXIST
+            // cls.add_method(
+            //     sel!(canResignKeyWindow),
+            //     Self::can_resign_key_window as extern "C" fn(&Object, Sel) -> BOOL,
+            // );
 
             cls.add_method(
                 sel!(dealloc),
-                Self::dealloc as extern "C" fn(&mut Object, Sel),
+                Self::dealloc as extern "C" fn(&mut Object, Sel), // not needed anymore
             );
 
             // Add mouse tracking methods
@@ -259,22 +259,16 @@ impl RawNSPanel {
         let _: () = unsafe { msg_send![self, setReleasedWhenClosed: value] };
     }
 
-    #[deprecated(
-        since = "2.0.1",
-        note = "Use set_released_when_closed(bool) instead. This method will be removed in a future version."
-    )]
-    pub fn released_when_closed(&self, value: bool) {
-        self.set_released_when_closed(value);
-    }
-
     pub fn close(&self) {
         let _: () = unsafe { msg_send![self, close] };
     }
 
+    // not sure when the heck this is needed
     pub fn handle(&mut self) -> ShareId<Self> {
         unsafe { ShareId::from_ptr(self as *mut Self) }
     }
 
+    // will do manually cuz this isn't an original NSPanel method... shouldn't have been in the RawNSPanel in the first place...
     fn add_tracking_area(&self) {
         let view: id = self.content_view();
         let bounds: NSRect = unsafe { NSViewOld::bounds(view) };
