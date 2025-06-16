@@ -1,12 +1,7 @@
-use bitflags::bitflags;
 use cocoa::{
-    appkit::{
-        NSView as NSViewOld, NSViewHeightSizable, NSViewWidthSizable, NSWindowCollectionBehavior,
-    },
-    base::{id, nil, BOOL, NO, YES},
-    foundation::NSRect,
+    appkit::NSWindowCollectionBehavior,
+    base::{id, nil, BOOL, YES},
 };
-// use objc2_app_kit::{NSPanel, NSView};
 
 use objc::{
     class,
@@ -19,48 +14,27 @@ use objc_foundation::INSObject;
 use objc_id::{Id, ShareId};
 use tauri::{Runtime, WebviewWindow};
 
-bitflags! {
-    struct NSTrackingAreaOptionsOld: u32 {
-        const NSTrackingActiveAlways = 0x80;
-        const NSTrackingMouseEnteredAndExited = 0x01;
-        const NSTrackingMouseMoved = 0x02;
-        const NSTrackingCursorUpdate = 0x04;
-    }
-}
-
 extern "C" {
     pub fn object_setClass(obj: id, cls: id) -> id;
-
-    // Mouse tracking related selectors
-    pub fn NSMouseEntered(event: id);
-    pub fn NSMouseExited(event: id);
-    pub fn NSMouseMoved(event: id);
-    pub fn NSCursorUpdate(event: id);
 }
 
-const CLS_NAME: &str = "RawNSPanel";
+const CLS_NAME: &str = "NonInteractiveNSPanel";
 
-pub struct RawNSPanel;
+pub struct NonInteractiveNSPanel;
 
-unsafe impl Sync for RawNSPanel {}
-unsafe impl Send for RawNSPanel {}
+unsafe impl Sync for NonInteractiveNSPanel {}
+unsafe impl Send for NonInteractiveNSPanel {}
 
-impl INSObject for RawNSPanel {
+impl INSObject for NonInteractiveNSPanel {
     fn class() -> &'static runtime::Class {
         Class::get(CLS_NAME).unwrap_or_else(Self::define_class)
     }
 }
 
-impl RawNSPanel {
+impl NonInteractiveNSPanel {
     /// Returns YES to ensure that RawNSPanel can become a key window
     extern "C" fn can_become_key_window(_: &Object, _: Sel) -> BOOL {
         YES // [UPDATED COMMENT] if "NO", the panel becomes a key window only when you click on it (previous behavior)
-    }
-
-    // Add this new method to prevent automatic resignation
-    extern "C" fn can_resign_key_window(_: &Object, _: Sel) -> BOOL {
-        // Return NO to prevent the panel from automatically resigning key window status
-        NO // [UPDATED COMMENT] Making it "YES" doesn't change anything functionally if we have the mouse tracking area
     }
 
     extern "C" fn dealloc(this: &mut Object, _cmd: Sel) {
@@ -70,24 +44,6 @@ impl RawNSPanel {
                 msg_send![super(this, superclass), dealloc];
             dealloc(this, _cmd);
         }
-    }
-
-    extern "C" fn mouse_entered(_this: &Object, _sel: Sel, _event: id) {
-        unsafe {
-            let this: id = _this as *const _ as id;
-
-            // Force the panel to become key and active
-            let _: () = msg_send![this, makeKeyWindow];
-
-            // Add explicit type annotation for the content view
-            let content_view: id = msg_send![this, contentView];
-            let _: () = msg_send![this, makeFirstResponder: content_view];
-        }
-    }
-
-    extern "C" fn mouse_exited(_this: &Object, _sel: Sel, _event: id) {
-        // resign key window - THIS FIXES KEYBOARD FOCUS NOT BEING RETURNED ON MOUSE EXIT
-        let _: () = unsafe { msg_send![_this, resignKeyWindow] };
     }
 
     fn define_class() -> &'static Class {
@@ -100,26 +56,9 @@ impl RawNSPanel {
                 Self::can_become_key_window as extern "C" fn(&Object, Sel) -> BOOL,
             );
 
-            // Add this new method to prevent the panel from resigning key window status - NOTE THIS DOESN'T EXIST
-            // cls.add_method(
-            //     sel!(canResignKeyWindow),
-            //     Self::can_resign_key_window as extern "C" fn(&Object, Sel) -> BOOL,
-            // );
-
             cls.add_method(
                 sel!(dealloc),
                 Self::dealloc as extern "C" fn(&mut Object, Sel), // not needed anymore
-            );
-
-            // Add mouse tracking methods
-            cls.add_method(
-                sel!(mouseEntered:),
-                Self::mouse_entered as extern "C" fn(&Object, Sel, id),
-            );
-
-            cls.add_method(
-                sel!(mouseExited:),
-                Self::mouse_exited as extern "C" fn(&Object, Sel, id),
             );
         }
 
@@ -218,7 +157,6 @@ impl RawNSPanel {
 
     pub fn activate(&self) {
         // Configure panel for interaction
-        self.set_accepts_mouse_moved_events(true);
         self.set_becomes_key_only_if_needed(true);
         self.set_works_when_modal(true);
         self.set_hides_on_deactivate(false);
@@ -268,43 +206,15 @@ impl RawNSPanel {
         unsafe { ShareId::from_ptr(self as *mut Self) }
     }
 
-    // will do manually cuz this isn't an original NSPanel method... shouldn't have been in the RawNSPanel in the first place...
-    fn add_tracking_area(&self) {
-        let view: id = self.content_view();
-        let bounds: NSRect = unsafe { NSViewOld::bounds(view) };
-        let track_view: id = unsafe { msg_send![class!(NSTrackingArea), alloc] };
-        let track_view: id = unsafe {
-            msg_send![
-                track_view,
-                initWithRect: bounds
-                options: NSTrackingAreaOptionsOld::NSTrackingActiveAlways.bits()
-                | NSTrackingAreaOptionsOld::NSTrackingMouseEnteredAndExited.bits()
-                | NSTrackingAreaOptionsOld::NSTrackingMouseMoved.bits()
-                | NSTrackingAreaOptionsOld::NSTrackingCursorUpdate.bits()
-                owner: self
-                userInfo: nil
-            ]
-        };
-
-        let autoresizing_mask = NSViewWidthSizable | NSViewHeightSizable;
-        let () = unsafe { msg_send![view, setAutoresizingMask: autoresizing_mask] };
-        let () = unsafe { msg_send![view, addTrackingArea: track_view] };
-    }
-
     /// Create an NSPanel from a Tauri Webview Window
     pub fn from_window<R: Runtime>(window: WebviewWindow<R>) -> Id<Self> {
         let nswindow: id = window.ns_window().unwrap() as _;
         let nspanel_class: id = unsafe { msg_send![Self::class(), class] };
         unsafe {
             object_setClass(nswindow, nspanel_class);
-            let panel = Id::from_retained_ptr(nswindow as *mut RawNSPanel);
-
-            // Add a tracking area to the panel's content view
-            panel.add_tracking_area();
+            let panel = Id::from_retained_ptr(nswindow as *mut NonInteractiveNSPanel);
 
             // Configure panel to maintain focus - do this immediately
-            panel.set_accepts_mouse_moved_events(true);
-            panel.set_becomes_key_only_if_needed(false);
             panel.set_hides_on_deactivate(false);
             panel.set_works_when_modal(true);
 
@@ -318,4 +228,4 @@ impl RawNSPanel {
     }
 }
 
-unsafe impl Message for RawNSPanel {}
+unsafe impl Message for NonInteractiveNSPanel {}

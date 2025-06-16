@@ -5,7 +5,7 @@ use std::{collections::HashMap, sync::Mutex};
 
 use cocoa::base::id;
 use objc_id::ShareId;
-use raw_nspanel::RawNSPanel;
+use raw_nspanel::NonInteractiveNSPanel;
 use tauri::{
     plugin::{Builder, TauriPlugin},
     Manager, Runtime, WebviewWindow,
@@ -18,23 +18,23 @@ pub extern crate objc_foundation;
 pub extern crate objc_id;
 pub extern crate tauri;
 
-pub type Panel = ShareId<RawNSPanel>;
+pub type NonInteractivePanel = ShareId<NonInteractiveNSPanel>;
 
 #[derive(Default)]
 pub struct Store {
-    panels: HashMap<String, ShareId<RawNSPanel>>,
+    panels: HashMap<String, ShareId<NonInteractiveNSPanel>>,
 }
 
-pub struct WebviewPanelManager(pub Mutex<Store>);
+pub struct NonInteractivePanelManager(pub Mutex<Store>);
 
-impl Default for WebviewPanelManager {
+impl Default for NonInteractivePanelManager {
     fn default() -> Self {
         Self(Mutex::new(Store::default()))
     }
 }
 
 pub trait ManagerExt<R: Runtime> {
-    fn get_webview_panel(&self, label: &str) -> Result<ShareId<RawNSPanel>, Error>;
+    fn get_webview_panel(&self, label: &str) -> Result<ShareId<NonInteractiveNSPanel>, Error>;
 }
 
 #[derive(Debug)]
@@ -43,8 +43,8 @@ pub enum Error {
 }
 
 impl<R: Runtime, T: Manager<R>> ManagerExt<R> for T {
-    fn get_webview_panel(&self, label: &str) -> Result<ShareId<RawNSPanel>, Error> {
-        let manager = self.state::<self::WebviewPanelManager>();
+    fn get_webview_panel(&self, label: &str) -> Result<ShareId<NonInteractiveNSPanel>, Error> {
+        let manager = self.state::<self::NonInteractivePanelManager>();
         let manager = manager.0.lock().unwrap();
 
         match manager.panels.get(label) {
@@ -60,14 +60,14 @@ pub struct WebviewPanelConfig {
 }
 
 pub trait WebviewWindowExt<R: Runtime> {
-    fn to_panel(&self) -> tauri::Result<ShareId<RawNSPanel>>;
+    fn to_panel(&self) -> tauri::Result<ShareId<NonInteractiveNSPanel>>;
 }
 
 impl<R: Runtime> WebviewWindowExt<R> for WebviewWindow<R> {
-    fn to_panel(&self) -> tauri::Result<ShareId<RawNSPanel>> {
-        let panel = RawNSPanel::from_window(self.to_owned());
+    fn to_panel(&self) -> tauri::Result<ShareId<NonInteractiveNSPanel>> {
+        let panel = NonInteractiveNSPanel::from_window(self.to_owned());
         let shared_panel = panel.share();
-        let manager = self.state::<self::WebviewPanelManager>();
+        let manager = self.state::<self::NonInteractivePanelManager>();
 
         manager
             .0
@@ -84,7 +84,7 @@ impl<R: Runtime> WebviewWindowExt<R> for WebviewWindow<R> {
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("nspanel")
         .setup(|app, _api| {
-            app.manage(self::WebviewPanelManager::default());
+            app.manage(self::NonInteractivePanelManager::default());
 
             Ok(())
         })

@@ -11,7 +11,7 @@ macro_rules! panel_delegate {
         use $crate::cocoa::base::{id, nil, BOOL, NO};
         use $crate::objc_foundation::INSObject;
         use $crate::objc_id::{Id, ShareId};
-        use $crate::raw_nspanel::RawNSPanel;
+        use $crate::raw_nspanel::NonInteractiveNSPanel;
         use $crate::tauri::Runtime;
         use $crate::block::ConcreteBlock;
         use std::ffi::{c_void, c_char};

@@ -1,6 +1,9 @@
+WARNING: THIS BRANCH OF THE CRATE IS FOR CUSTOM NSPANEL HOVER MOUSE ACTIVATION LOGIC BECAUSE TAURI DOES NOT HAVE CURSOR POSITION FORWARDING
+
 Convert a Tauri `WebviewWindow` ([`NSWindow`](https://developer.apple.com/documentation/appkit/nswindow)) to panel ([`NSPanel`](https://developer.apple.com/documentation/appkit/nspanel))
 
 # Install
+
 Install the plugin by adding the following to your `Cargo.toml` file:
 
 ```toml
