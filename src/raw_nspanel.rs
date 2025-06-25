@@ -1,3 +1,5 @@
+use std::{thread::sleep, time::Duration};
+
 use bitflags::bitflags;
 use cocoa::{
     appkit::{
@@ -89,6 +91,10 @@ impl RawNSPanel {
 
     extern "C" fn mouse_exited(_this: &Object, _sel: Sel, _event: id) {
         // resign key window - THIS FIXES KEYBOARD FOCUS NOT BEING RETURNED ON MOUSE EXIT
+        // [TESTING] on mouse exit wait 20ms before resigning key window so the UI can update any potential hover effects
+
+        sleep(Duration::from_millis(20));
+
         let _: () = unsafe { msg_send![_this, resignKeyWindow] };
     }
 
